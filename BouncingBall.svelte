@@ -70,31 +70,17 @@
   });
 
   function updateWorld() {
-    animationFrame = window.requestAnimationFrame(updateWorld);
-
     // let the Matter.js update the state of world
     Engine.update(engine, 1000 / 60); // 16.666ms is the default
 
-    // pull new state of the world from Matter.js and use that information to update our SVG representation of the world
-    updateDataFromWorld();
-  }
+    // need this to trigger update
+    balls = balls;
 
-  function updateDataFromWorld() {
-    balls = Composite.allBodies(engine.world)
-      .filter(b => b.label === "ball")
-      .map(b => {
-        return {
-          x: b.position.x,
-          y: b.position.y,
-          r: b.circleRadius,
-          id: b.id
-        };
-      });
+    animationFrame = window.requestAnimationFrame(updateWorld);
   }
 
   function handleClick(e) {
-    addBall(e.x, e.y);
-    updateDataFromWorld();
+    balls = [...balls, addBall(e.x, e.y)];
   }
 
   function addBall(x, y) {
@@ -109,6 +95,7 @@
     const body = Bodies.circle(x, y, 20, bodyOptions);
 
     const forceMagnitude = 0.05 * body.mass;
+    // apply some random forces...
     Body.applyForce(body, body.position, {
       x:
         (forceMagnitude + Common.random() * forceMagnitude) *
@@ -116,7 +103,9 @@
       y: -forceMagnitude + Common.random() * -forceMagnitude
     });
 
-    World.add(engine.world, body);
+    World.addBody(engine.world, body);
+
+    return body;
   }
 </script>
 
@@ -137,8 +126,8 @@
     on:click="{handleClick}"
   />
 
-  {#each balls as ball}
-    <circle cx="{ball.x}" cy="{ball.y}" r="{ball.r}" fill="black"></circle>
+  {#each balls as ball (ball.id)}
+    <circle cx="{ball.position.x}" cy="{ball.position.y}" r="{ball.circleRadius}" fill="black"></circle>
   {/each}
 </svg>
 
